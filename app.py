@@ -156,8 +156,8 @@ def display_results(results):
     best = results['best_result']
     
     # Main result section
-    st.markdown("---")
-    st.markdown("## 🎯 Optimization Results")
+    st.markdown("")
+    st.markdown("### Results")
     
     # Score improvement
     original_score = results['evaluation_results'][0]['scores']['total_score']
@@ -173,23 +173,34 @@ def display_results(results):
         improvement_pct = (improvement / original_score * 100) if original_score > 0 else 0
         st.metric("Improvement", f"{improvement_pct:.1f}%")
     
+    st.markdown("")
+    
     # Optimized prompt
-    st.markdown("### ✨ Optimized Prompt")
-    st.info(best['best_prompt'])
+    st.markdown("**Optimized Prompt:**")
+    st.markdown(f"""
+    <div style='background: #f0f4ff; padding: 1rem; border-radius: 10px; border-left: 4px solid #c5d5f7;'>
+        {best['best_prompt']}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("")
     
     # Final response
-    st.markdown("### 📝 Improved Response")
-    st.success(best['best_response'])
+    st.markdown("**Response:**")
+    st.markdown(f"""
+    <div style='background: #f5fff5; padding: 1rem; border-radius: 10px; border-left: 4px solid #c5e8c5;'>
+        {best['best_response']}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("")
     
     # Explanation
-    st.markdown("### 💡 Why This Prompt Performed Better")
-    st.write(best['explanation'])
+    st.caption(best['explanation'])
     
     # Detailed scoring breakdown (collapsible)
-    with st.expander("📊 View Detailed Score Breakdown"):
+    with st.expander("View Score Details"):
         scores = best['best_scores']
-        
-        st.markdown("**Individual Metric Scores:**")
         
         col1, col2 = st.columns(2)
         with col1:
@@ -198,13 +209,6 @@ def display_results(results):
         with col2:
             st.metric("Structure & Formatting", f"{scores['structure_score']:.1f}/25")
             st.metric("Prompt Alignment", f"{scores['alignment_score']:.1f}/25")
-    
-    # Show all variations (collapsible)
-    with st.expander("🔍 View All Generated Variations"):
-        for idx, var in enumerate(results['variations'], 1):
-            st.markdown(f"**Variation {idx}:**")
-            st.text(var)
-            st.markdown("---")
 
 
 def main():
@@ -212,83 +216,142 @@ def main():
     
     # Page configuration
     st.set_page_config(
-        page_title="Automated Prompt Optimization",
-        page_icon="🚀",
-        layout="wide"
+        page_title="PromptBoost - Make Your Prompts Better",
+        page_icon="✨",
+        layout="wide",
+        initial_sidebar_state="expanded"
     )
     
-    # Title and description
-    st.title("🚀 Automated Prompt Optimization")
+    # Custom CSS for soft pastel aesthetic
     st.markdown("""
-    ### Using LLM-Generated Variations and Metric-Based Evaluation
+    <style>
+        .main-header {
+            text-align: center;
+            padding: 2rem 0 1rem 0;
+            margin-bottom: 1.5rem;
+        }
+        .main-header h1 {
+            color: #8b9dc3;
+            font-size: 2.5rem;
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+        }
+        .main-header p {
+            color: #a0a0a0;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+        .stTextArea textarea {
+            border-radius: 12px;
+            border: 2px solid #e8e8f0;
+            font-size: 15px;
+            background-color: #fafbfd;
+        }
+        .stTextArea textarea:focus {
+            border-color: #c7d2e8;
+            box-shadow: 0 0 0 0.2rem rgba(199,210,232,0.2);
+        }
+        .stButton > button {
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 16px;
+            padding: 0.6rem 1.5rem;
+            background-color: #d4e4f7;
+            color: #5a6f8f;
+        }
+        .stButton > button:hover {
+            background-color: #c0d7f2;
+            border-color: #b8d0ed;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #fafbfd;
+        }
+    </style>
+    """, unsafe_allow_html=True)
     
-    This system automatically improves your prompts through systematic optimization and 
-    deterministic evaluation—no prompt engineering expertise required!
-    """)
+    # Simple header
+    st.markdown("""
+    <div class="main-header">
+        <h1>✨ PromptBoost</h1>
+        <p>Turn your ideas into better prompts</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    st.markdown("---")
+    st.markdown("""
+    <div style='background: #f5f3ff; padding: 1.2rem; border-radius: 12px; margin-bottom: 2rem; border-left: 4px solid #d4c5f9;'>
+        <p style='margin: 0; font-size: 1rem; color: #6b6b6b;'>
+            Drop your prompt below and I'll help make it clearer and more effective.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Initialize system components
     optimizer, generator, evaluator, storage = initialize_system()
     
-    # Sidebar for statistics
+    # Sidebar - functional elements only
     with st.sidebar:
-        st.markdown("## 📊 System Statistics")
+        st.markdown("### Your Stats")
         
         stats = storage.get_statistics()
-        st.metric("Total Optimizations", stats['total_optimizations'])
-        st.metric("Average Improvement", f"{stats['average_improvement']:.1f} pts")
         
-        if stats['task_type_counts']:
-            st.markdown("**Task Type Distribution:**")
-            for task, count in stats['task_type_counts'].items():
-                st.write(f"• {task}: {count}")
+        if stats['total_optimizations'] > 0:
+            st.metric("Prompts Improved", stats['total_optimizations'])
+            st.metric("Average Boost", f"+{stats['average_improvement']:.1f} pts")
+            
+            if stats['task_type_counts']:
+                st.markdown("")
+                st.markdown("**By Task Type:**")
+                for task, count in stats['task_type_counts'].items():
+                    st.caption(f"• {task}: {count}")
+        else:
+            st.caption("No optimizations yet")
         
-        st.markdown("---")
-        st.markdown("### ℹ️ About")
-        st.markdown("""
-        This system uses:
-        - **Google Gemini** (free tier)
-        - **Rule-based metrics** (no subjective LLM rating)
-        - **Systematic optimization** pipeline
-        """)
-        
-        if st.button("Clear History"):
+        st.markdown("")
+        st.markdown("")
+        if st.button("Clear History", use_container_width=True):
             storage.clear_results()
-            st.success("History cleared!")
+            st.success("History cleared")
             st.rerun()
     
     # Main input section
-    col1, col2 = st.columns([2, 1])
+    col1, col2 = st.columns([3, 2])
     
     with col1:
+        st.markdown("#### 💭 What's on your mind?")
         user_prompt = st.text_area(
-            "Enter your prompt:",
-            placeholder="Example: Explain machine learning",
-            height=150,
-            help="Enter any prompt you'd like to optimize"
+            "Enter your prompt",
+            placeholder="e.g., 'explain quantum computing' or 'write a function to sort numbers'",
+            height=160,
+            help="Type anything you want help with – don't worry about making it perfect!",
+            label_visibility="collapsed"
         )
     
     with col2:
+        st.markdown("#### Task Type")
+        
         task_type = st.selectbox(
-            "Select task type:",
+            "Select task type",
             options=[
                 "Question Answering",
-                "Summarization",
+                "Summarization", 
                 "Explanation",
                 "Code Generation"
             ],
-            help="Choose the type of task for task-specific optimization"
+            label_visibility="collapsed"
         )
         
         st.markdown("")
         st.markdown("")
-        optimize_button = st.button("🚀 Optimize My Prompt", type="primary", use_container_width=True)
+        optimize_button = st.button(
+            "✨ Optimize Prompt", 
+            type="primary", 
+            use_container_width=True
+        )
     
     # Run optimization when button is clicked
     if optimize_button:
         if not user_prompt or len(user_prompt.strip()) < 5:
-            st.warning("⚠️ Please enter a prompt with at least 5 characters.")
+            st.warning("Please enter a prompt (at least 5 characters)")
         else:
             # Run the pipeline
             results = run_optimization_pipeline(
@@ -304,40 +367,14 @@ def main():
             if results:
                 display_results(results)
     
-    # Instructions section
-    with st.expander("📖 How to Use This System"):
+    # Simple help section
+    with st.expander("How it works"):
         st.markdown("""
-        ### Step-by-Step Guide:
-        
-        1. **Enter Your Prompt**: Type your original prompt in the text area
-        2. **Select Task Type**: Choose the type of task from the dropdown:
-           - **Question Answering**: For factual questions
-           - **Summarization**: For condensing information
-           - **Explanation**: For understanding concepts
-           - **Code Generation**: For programming tasks
-        3. **Click Optimize**: Press the "Optimize My Prompt" button
-        4. **View Results**: See your optimized prompt and improved response
-        
-        ### How It Works:
-        
-        The system follows a systematic 4-step pipeline:
-        
-        1. **Variation Generation**: Creates 4 improved versions of your prompt
-        2. **Response Generation**: Generates responses for all prompts with identical settings
-        3. **Metric-Based Evaluation**: Scores each response using deterministic metrics:
-           - Length & completeness
-           - Task-relevant keywords
-           - Structure & formatting
-           - Prompt alignment
-        4. **Selection**: Chooses the highest-scoring prompt and response
-        
-        ### Key Features:
-        
-        - ✅ No prompt engineering expertise needed
-        - ✅ Systematic, repeatable process
-        - ✅ Objective, metric-based evaluation
-        - ✅ Clear explanations of improvements
-        - ✅ Result history and statistics
+        1. Enter your prompt and select the task type
+        2. Click optimize
+        3. The system generates improved variations
+        4. Responses are evaluated using objective metrics
+        5. You get the best optimized prompt and response
         """)
 
 
