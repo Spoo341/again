@@ -28,8 +28,8 @@ class GeminiClient:
         # Configure the API
         genai.configure(api_key=self.api_key)
         
-        # Use gemini-pro model (free tier)
-        self.model = genai.GenerativeModel('gemini-pro')
+        # Use gemini-2.5-flash (latest free tier model)
+        self.model = genai.GenerativeModel('models/gemini-2.5-flash')
     
     def generate_text(self, prompt: str, temperature: float = 0.7, max_tokens: int = 1024) -> str:
         """
@@ -57,8 +57,16 @@ class GeminiClient:
             return response.text
         
         except Exception as e:
-            print(f"Error generating text: {e}")
-            raise
+            error_msg = str(e).lower()
+            if "connection" in error_msg or "network" in error_msg:
+                raise ConnectionError(f"🌐 Network error: Cannot connect to Gemini API. Check your internet connection.")
+            elif "api key" in error_msg or "authentication" in error_msg or "401" in error_msg:
+                raise ValueError(f"🔑 API Key error: Invalid or expired API key. Get a new one from https://makersuite.google.com/app/apikey")
+            elif "rate limit" in error_msg or "429" in error_msg or "quota" in error_msg:
+                raise ConnectionError(f"⏱️ Rate limit: Too many requests. Wait a moment and try again.")
+            else:
+                print(f"Error generating text: {e}")
+                raise Exception(f"API Error: {e}")
     
     def generate_text_batch(self, prompts: list[str], temperature: float = 0.7, max_tokens: int = 1024) -> list[str]:
         """

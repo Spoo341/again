@@ -129,15 +129,29 @@ def run_optimization_pipeline(user_prompt, task_type, optimizer, generator, eval
         status_text.text("✅ Optimization complete!")
         
         # Save result to storage
-        storage.save_optimization_result({
-            'timestamp': datetime.now().isoformat(),
-            'task_type': task_type,
-            'original_prompt': user_prompt,
-            'optimized_prompt': best_result['best_prompt'],
-            'original_score': evaluation_results[0]['scores']['total_score'],
-            'optimized_score': best_result['best_scores']['total_score'],
-            'improvement': best_result['best_scores']['total_score'] - evaluation_results[0]['scores']['total_score']
-        })
+        try:
+            result_to_save = {
+                'timestamp': datetime.now().isoformat(),
+                'task_type': task_type,
+                'original_prompt': user_prompt,
+                'optimized_prompt': best_result['best_prompt'],
+                'original_score': evaluation_results[0]['scores']['total_score'],
+                'optimized_score': best_result['best_scores']['total_score'],
+                'improvement': best_result['best_scores']['total_score'] - evaluation_results[0]['scores']['total_score']
+            }
+            print(f"📝 Attempting to save: {result_to_save}")
+            print(f"📂 Storage object: {storage}")
+            print(f"📂 Storage file path: {storage.results_file}")
+            
+            storage.save_optimization_result(result_to_save)
+            
+            print("✅ Successfully saved to storage")
+            st.info(f"💾 Saved to {storage.results_file}")
+        except Exception as save_error:
+            print(f"❌ Error saving to storage: {save_error}")
+            import traceback
+            print(traceback.format_exc())
+            st.error(f"Could not save history: {save_error}")
         
         return {
             'best_result': best_result,
@@ -147,6 +161,9 @@ def run_optimization_pipeline(user_prompt, task_type, optimizer, generator, eval
     
     except Exception as e:
         st.error(f"Error during optimization: {e}")
+        import traceback
+        st.code(traceback.format_exc())
+        print(f"FULL ERROR: {traceback.format_exc()}")
         return None
 
 
@@ -222,9 +239,20 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    # Custom CSS for soft pastel aesthetic
+    # Custom CSS for soft pastel aesthetic and force light mode
     st.markdown("""
     <style>
+        /* Force light mode */
+        [data-testid="stAppViewContainer"] {
+            background-color: #ffffff;
+            color: #333333;
+        }
+        
+        /* Hide only deploy button */
+        button[kind="header"] {
+            display: none;
+        }
+        
         .main-header {
             text-align: center;
             padding: 2rem 0 1rem 0;
@@ -237,7 +265,7 @@ def main():
             font-weight: 600;
         }
         .main-header p {
-            color: #a0a0a0;
+            color: #6b6b6b;
             font-size: 1.1rem;
             margin: 0;
         }
@@ -246,6 +274,7 @@ def main():
             border: 2px solid #e8e8f0;
             font-size: 15px;
             background-color: #fafbfd;
+            color: #333333;
         }
         .stTextArea textarea:focus {
             border-color: #c7d2e8;
@@ -265,6 +294,21 @@ def main():
         }
         [data-testid="stSidebar"] {
             background-color: #fafbfd;
+        }
+        
+        /* Ensure all text is visible */
+        p, span, div, label, h1, h2, h3, h4, h5, h6 {
+            color: #333333 !important;
+        }
+        
+        /* Sidebar text */
+        [data-testid="stSidebar"] * {
+            color: #333333 !important;
+        }
+        
+        /* Metric labels and values */
+        [data-testid="stMetricLabel"], [data-testid="stMetricValue"] {
+            color: #333333 !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -353,19 +397,23 @@ def main():
         if not user_prompt or len(user_prompt.strip()) < 5:
             st.warning("Please enter a prompt (at least 5 characters)")
         else:
-            # Run the pipeline
-            results = run_optimization_pipeline(
-                user_prompt.strip(),
-                task_type,
-                optimizer,
-                generator,
-                evaluator,
-                storage
-            )
-            
-            # Display results
-            if results:
-                display_results(results)
+            with st.spinner("Running optimization..."):
+                # Run the pipeline
+                results = run_optimization_pipeline(
+                    user_prompt.strip(),
+                    task_type,
+                    optimizer,
+                    generator,
+                    evaluator,
+                    storage
+                )
+                
+                # Display results
+                if results:
+                    display_results(results)
+                    st.success("✅ Saved to history!")
+                else:
+                    st.error("Optimization failed. Check the console for errors.")
     
     # Simple help section
     with st.expander("How it works"):
