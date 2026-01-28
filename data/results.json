@@ -1,20 +1,20 @@
 [
   {
-    "timestamp": "2025-12-26T14:54:34.840737",
+    "timestamp": "2026-01-06T14:14:59.293723",
     "task_type": "Question Answering",
-    "original_prompt": "explain ai",
-    "optimized_prompt": "Provide a concise, jargon-free explanation of Artificial Intelligence (AI) for a non-technical audience, defining its core concept and primary goal in a single paragraph.",
-    "original_score": 43.0,
-    "optimized_score": 44.94444444444444,
-    "improvement": 1.9444444444444429
+    "original_prompt": "hi, im dumb spoorthi...",
+    "optimized_prompt": "hi, im dumb spoorthi...",
+    "original_score": 68.0,
+    "optimized_score": 68.0,
+    "improvement": 0.0
   },
   {
-    "timestamp": "2025-12-26T14:55:48.057304",
-    "task_type": "Summarization",
-    "original_prompt": "explain ai",
-    "optimized_prompt": "Summarize Artificial Intelligence (AI) for a high school student in 4-5 bullet points. Each point should cover a key aspect: what AI is, how it learns, a few examples, and its potential impact on society.",
-    "original_score": 33.0,
-    "optimized_score": 66.4090909090909,
-    "improvement": 33.40909090909091
+    "task_type": "Explanation",
+    "original_prompt": "explain AI",
+    "optimized_prompt": "Explain Artificial Intelligence (AI) for a beginner. Provide a high-level overview of what it is, how it works in simple terms, and give 2-3 common, relatable examples of AI in everyday life. Use clear, concise language and bullet points for key concepts.",
+    "original_score": 23.0,
+    "optimized_score": 65.82407407407408,
+    "improvement": 42.824074074074076,
+    "timestamp": "2026-01-28T22:59:34.005930"
   }
 ]

@@ -23,20 +23,16 @@ This project automatically improves user prompts through systematic optimization
    - Visit https://makersuite.google.com/app/apikey
    - Create an API key
 
-4. Create a `.env` file:
+4. Create a `.env` file in the project root:
    ```bash
-   cp .env.example .env
+   echo "GEMINI_API_KEY=your_actual_api_key_here" > .env
    ```
-
-5. Add your API key to `.env`:
-   ```
-   GEMINI_API_KEY=your_actual_api_key_here
-   ```
+   Replace `your_actual_api_key_here` with your actual API key
 
 ## Running the Application
 
 ```bash
-streamlit run app.py
+python3 -m streamlit run app.py
 ```
 
 The app will open in your browser at http://localhost:8501
