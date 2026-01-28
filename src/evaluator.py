@@ -21,19 +21,24 @@ class ResponseEvaluator:
         self.task_keywords = {
             "Question Answering": [
                 "answer", "because", "therefore", "specifically", "exactly",
-                "result", "conclusion", "fact", "evidence", "reason"
+                "result", "conclusion", "fact", "evidence", "reason",
+                "is", "are", "means", "refers", "includes", "provides",
+                "defined", "known", "used", "example", "such"
             ],
             "Summarization": [
                 "summary", "main", "key", "important", "overall", "primarily",
-                "essentially", "briefly", "in short", "highlights"
+                "essentially", "briefly", "in short", "highlights",
+                "focus", "central", "core", "significant", "notable"
             ],
             "Explanation": [
                 "first", "second", "step", "because", "reason", "example",
-                "means", "understand", "process", "explain", "how", "why"
+                "means", "understand", "process", "explain", "how", "why",
+                "works", "allows", "enables", "essentially", "concept", "idea"
             ],
             "Code Generation": [
                 "function", "class", "def", "return", "import", "variable",
-                "method", "parameter", "loop", "if", "else"
+                "method", "parameter", "loop", "if", "else",
+                "code", "implement", "create", "define"
             ]
         }
     
@@ -199,7 +204,8 @@ class ResponseEvaluator:
             'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
             'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should',
             'could', 'can', 'may', 'might', 'must', 'to', 'of', 'in', 'on', 'at',
-            'for', 'with', 'about', 'as', 'by', 'from', 'and', 'or', 'but', 'not'
+            'for', 'with', 'about', 'as', 'by', 'from', 'and', 'or', 'but', 'not',
+            'please', 'provide', 'explain', 'describe', 'write', 'generate', 'create'
         }
         
         prompt_words = set(
@@ -213,14 +219,21 @@ class ResponseEvaluator:
         # Count how many prompt words appear in response
         matching_words = sum(1 for word in prompt_words if word in response_lower)
         
-        if not prompt_words:
-            return 15.0  # Neutral score if no meaningful words in prompt
+        if not prompt_words or len(prompt_words) < 2:
+            # For very short prompts, give a base score to avoid over-rewarding
+            return 12.0
         
         # Calculate overlap percentage
         overlap_percentage = matching_words / len(prompt_words)
         
-        # Convert to score (0-25)
-        score = overlap_percentage * 25
+        # Apply a curve to prevent simple prompts from getting perfect scores
+        # Longer, more detailed prompts can still score well even with partial matches
+        if len(prompt_words) <= 3:
+            # Short prompts need higher overlap to score well
+            score = overlap_percentage * 20
+        else:
+            # Longer prompts are more forgiving
+            score = (overlap_percentage * 0.8 + 0.2) * 25
         
         return min(score, 25.0)
     
