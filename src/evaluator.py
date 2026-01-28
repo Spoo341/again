@@ -17,28 +17,32 @@ class ResponseEvaluator:
     def __init__(self):
         """Initialize the evaluator with task-specific keywords."""
         
-        # Task-specific quality indicators
+        # Task-specific quality indicators - STRICT criteria for high scores
         self.task_keywords = {
             "Question Answering": [
-                "answer", "because", "therefore", "specifically", "exactly",
-                "result", "conclusion", "fact", "evidence", "reason",
-                "is", "are", "means", "refers", "includes", "provides",
-                "defined", "known", "used", "example", "such"
+                "specifically", "exactly", "precisely", "clearly",
+                "therefore", "because", "consequently", "thus",
+                "evidence", "fact", "research", "study",
+                "conclusion", "result", "finding"
             ],
             "Summarization": [
-                "summary", "main", "key", "important", "overall", "primarily",
-                "essentially", "briefly", "in short", "highlights",
-                "focus", "central", "core", "significant", "notable"
+                "summary", "overview", "summarize", "summarizing",
+                "key points", "main points", "highlights",
+                "primarily", "essentially", "fundamentally",
+                "in brief", "in short", "overall"
             ],
             "Explanation": [
-                "first", "second", "step", "because", "reason", "example",
-                "means", "understand", "process", "explain", "how", "why",
-                "works", "allows", "enables", "essentially", "concept", "idea"
+                "first", "second", "third", "finally",
+                "step-by-step", "process", "procedure",
+                "example", "instance", "illustration",
+                "understand", "comprehend", "grasp",
+                "concept", "principle", "mechanism"
             ],
             "Code Generation": [
-                "function", "class", "def", "return", "import", "variable",
-                "method", "parameter", "loop", "if", "else",
-                "code", "implement", "create", "define"
+                "function", "class", "def", "return", "import",
+                "parameter", "argument", "variable",
+                "loop", "iterate", "recursion",
+                "exception", "error handling", "validation"
             ]
         }
     
@@ -103,20 +107,23 @@ class ResponseEvaluator:
         min_words, max_words = optimal_ranges.get(task_type, (50, 200))
         
         if word_count < min_words * 0.5:
+            # Way too short - very low score
+            return 3.0
+        elif word_count < min_words * 0.75:
             # Too short
-            return 5.0
+            return 8.0
         elif word_count < min_words:
             # Slightly short
             return 15.0
         elif min_words <= word_count <= max_words:
-            # Optimal length
+            # Optimal length - full points
             return 25.0
         elif word_count <= max_words * 1.5:
-            # Slightly long
-            return 20.0
+            # Slightly long but acceptable
+            return 22.0
         else:
-            # Too long
-            return 10.0
+            # Too verbose
+            return 12.0
     
     def _score_keywords(self, response: str, task_type: str) -> float:
         """
@@ -220,20 +227,25 @@ class ResponseEvaluator:
         matching_words = sum(1 for word in prompt_words if word in response_lower)
         
         if not prompt_words or len(prompt_words) < 2:
-            # For very short prompts, give a base score to avoid over-rewarding
-            return 12.0
+            # Very short prompts get low base score
+            return 8.0
         
         # Calculate overlap percentage
         overlap_percentage = matching_words / len(prompt_words)
         
-        # Apply a curve to prevent simple prompts from getting perfect scores
-        # Longer, more detailed prompts can still score well even with partial matches
-        if len(prompt_words) <= 3:
-            # Short prompts need higher overlap to score well
-            score = overlap_percentage * 20
+        # Apply strict curve - simple prompts penalized heavily
+        if len(prompt_words) <= 2:
+            # Very short prompts (1-2 words) - heavily penalized
+            score = overlap_percentage * 12
+        elif len(prompt_words) <= 4:
+            # Short prompts (3-4 words) - penalized
+            score = overlap_percentage * 16
+        elif len(prompt_words) <= 8:
+            # Medium prompts - moderate scoring
+            score = overlap_percentage * 22
         else:
-            # Longer prompts are more forgiving
-            score = (overlap_percentage * 0.8 + 0.2) * 25
+            # Long detailed prompts - rewarded for specificity
+            score = (overlap_percentage * 0.7 + 0.3) * 25
         
         return min(score, 25.0)
     
